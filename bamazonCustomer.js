@@ -39,21 +39,20 @@ function showStore() {
                 res[i].department_name, res[i].price, res[i].stock_quantity]
             )
         }
-
         console.log(table.toString());
 
         askCust();
-    
+
     });
 };
 
-    // ONCE ORDER PLACED:
-    function askCust() {
-        connection.query("SELECT * FROM products", function (err, res) {
-            if (err) throw err;
+// ONCE ORDER PLACED:
+function askCust() {
+    connection.query("SELECT * FROM products", function (err, res) {
+        if (err) throw err;
 
-            inquirer.prompt([
-                {
+        inquirer.prompt([
+            {
                 name: "productId",
                 type: "input",
                 // choices: function(){
@@ -73,7 +72,7 @@ function showStore() {
             },
 
             {
-                name: "amount",
+                name: "quantity",
                 type: "input",
                 message: "How many items would you like to buy?",
                 validate: function (value) {
@@ -83,53 +82,59 @@ function showStore() {
                     return false;
                 }
             }
-            ]).then(function (answer) {
-                var chosenItem;
-                for (var i = 0; i < res.length; i++) {
-                    if (res[i].item_id === parseInt(answer.productId)) {
-                        chosenItem = res[i];
-                    }
-                    // console.log("Chosen Id:" + answer.productId);
+        ]).then(function (answer) {
+            var chosenItem;
+            for (var i = 0; i < res.length; i++) {
+                if (res[i].item_id === parseInt(answer.productId)) {
+                    chosenItem = res[i];
+                }
+                // console.log("Chosen Id:" + answer.productId);
 
-                if (chosenItem.stock_quantity > answer.amount) {
-                    if(err) throw err;
-                    connection.query ("UPDATE products SET ? WHERE ?")
-                    var newQuantity = chosenItem.stock_quantity - answer.amount;
-                    console.log(newQuantity);
-                    [
-                        {
-                            stock_quantity: newQuantity
-                        },
-                        {
-                            item_id: answer.chosenItem
+                if (chosenItem.stock_quantity > parseInt(answer.quantity)) {
+                    var newQuantity = chosenItem.stock_quantity - answer.quantity;
+                    connection.query(
+                        "UPDATE products SET ? WHERE ?",
+                        [
+                            {
+                                stock_quantity: newQuantity
+                            },
+                            {
+                                item_id: answer.productId
+                            }
+                        ],
+
+                        function (err) {
+                            if (err) throw err;
+                            console.log("your total amount due is: $" + (answer.quantity * res[i].price));
+                            showStore();
+
+
+                            // total(answer.quantity,res[i].price);
                         }
-                    ],
-                    console.log("ORDER PLACED");
+                    );
 
-                    total(answer.amount,res[i].price);
-                 
-                }        
-                    else if (res[i].stock_quantity < answer.amount) {
+                    if (chosenItem.stock_quantity < answer.quantity) {
                         console.log("INSUFFICIENT ITEMS IN STOCK");
                         askCust();
                     }
-                
                 }
-            })
+            }
         })
-    }
+    })
+}
 
 
-// function placeOrder(){
-//     var newQuantity = ;
 
-function total( number,price){
-    var total = number * price;
-    console.log("YOUR TOTAL IS:" +"$"+ total);
 
-};
+// function total(number, price) {
+//     var total = number * price;
+//     console.log("YOUR TOTAL AMOUNT DUE IS:" + "$" + total);
+// };
 
-// Check if your store has enough of the product to meet the customer's request.
+
+//
+// INSTRUCTIONS://
+//  Check if your store has enough of the product to meet the customer's request.
 // // If not, the app should log a phrase like Insufficient quantity!, and then 
 // prevent the order from going through.
 
