@@ -22,55 +22,112 @@ connection.connect(function (err) {
 
 // FUNCTIONS // 
 
+//TABLE//
 function showStore() {
-
-    //Create table // 
 
     connection.query("SELECT * FROM products", function (err, res) {
         if (err) throw err;
-        var table = new Table ({
-            head: ['Id','Product', 'Department', 'Price','Quantity'],
-            colWidtch: [10,10,10,10,10]
+
+        var table = new Table({
+            head: ['Id', 'Product', 'Department', 'Price', 'Quantity'],
+            colWidtch: [10, 10, 10, 10, 10]
         });
-        for (var i=0; i<res.length; i++) {
+
+        for (var i = 0; i < res.length; i++) {
             table.push(
-                [res[i].item_id, res[i].product_name, 
+                [res[i].item_id, res[i].product_name,
                 res[i].department_name, res[i].price, res[i].stock_quantity]
             )
         }
+
         console.log(table.toString());
 
-        // ask user // 
-
-        inquirer.prompt([{
-            name: "productId",
-            type: "input",
-            message: "What's the ID of the product you would like to purchase?"
-        },
-        {
-            name:"amount",
-            type: "input",
-            message:"How many units would you like to buy?",
-            // validate:function (answer){
-            //     if((answer.amount) > this.stock_quantity){
-            //         placeOrder();
-            //         return(true);
-            //         console.log(this.stock_quantity);
-            //     }
-            //     else {
-            //         console.log(" "+ "items."+ "Sorry, we are unable to process your order, Insufficient items in store!!")
-            //     }
-            //     return(false);
-            // }
-        
-        }])
+        askCust();
     
-    })
- 
+    });
 };
 
+    // ONCE ORDER PLACED:
+    function askCust() {
+        connection.query("SELECT * FROM products", function (err, res) {
+            if (err) throw err;
 
-// ONCE ORDER PLACED:
+            inquirer.prompt([
+                {
+                name: "productId",
+                type: "input",
+                // choices: function(){
+                //     var productArray = [];
+                //     for (var i=0; i < res.length; i++){
+                //         productArray.push(res[i].item_id)
+                //     }
+                //     return productArray;
+                // },
+                message: "What's the ID of the product you would like to purchase?",
+                // validate: function (value) {
+                //     if (isNaN(value) === false) {
+                //         return true;
+                //     }
+                //     return false
+                // }
+            },
+
+            {
+                name: "amount",
+                type: "input",
+                message: "How many items would you like to buy?",
+                validate: function (value) {
+                    if (isNaN(value) === false) {
+                        return true;
+                    }
+                    return false;
+                }
+            }
+            ]).then(function (answer) {
+                var chosenItem;
+                for (var i = 0; i < res.length; i++) {
+                    if (res[i].item_id === parseInt(answer.productId)) {
+                        chosenItem = res[i];
+                    }
+                    // console.log("Chosen Id:" + answer.productId);
+
+                if (chosenItem.stock_quantity > answer.amount) {
+                    if(err) throw err;
+                    connection.query ("UPDATE products SET ? WHERE ?")
+                    var newQuantity = chosenItem.stock_quantity - answer.amount;
+                    console.log(newQuantity);
+                    [
+                        {
+                            stock_quantity: newQuantity
+                        },
+                        {
+                            item_id: answer.chosenItem
+                        }
+                    ],
+                    console.log("ORDER PLACED");
+
+                    total(answer.amount,res[i].price);
+                 
+                }        
+                    else if (res[i].stock_quantity < answer.amount) {
+                        console.log("INSUFFICIENT ITEMS IN STOCK");
+                        askCust();
+                    }
+                
+                }
+            })
+        })
+    }
+
+
+// function placeOrder(){
+//     var newQuantity = ;
+
+function total( number,price){
+    var total = number * price;
+    console.log("YOUR TOTAL IS:" +"$"+ total);
+
+};
 
 // Check if your store has enough of the product to meet the customer's request.
 // // If not, the app should log a phrase like Insufficient quantity!, and then 
@@ -82,16 +139,4 @@ function showStore() {
 // // Once the update goes through, show the customer the total cost of their 
 // purchase.//
 
-function placeOrder(){
 
-
-}
-
-
-
-// DISPLAY CUST TOTAL AMOUNT OFORDER
-
-function total(){
-
-
-}
