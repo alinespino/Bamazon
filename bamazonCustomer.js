@@ -39,7 +39,7 @@ function showStore() {
                 res[i].department_name, res[i].price, res[i].stock_quantity]
             )
         }
-     
+
         console.log(table.toString());
 
         askCust();
@@ -61,7 +61,7 @@ function askCust() {
                 //     for (var i=0; i < res.length; i++){
                 //         productArray.push(res[i].item_id)
                 //     }
-               
+
                 // },
                 message: "What's the ID of the product you would like to purchase?",
                 // validate: function (value) {
@@ -86,51 +86,51 @@ function askCust() {
         ]).then(function (answer) {
             if (err) throw err;
             var chosenItem;
-            for (var i = 0; i < res.length; i++){
+            for (var i = 0; i < res.length; i++) {
                 if (res[i].item_id === answer.productId) {
                     chosenItem = res[i];
                     console.log(chosenItem);
                 }
-            }  
+            }
 
             var newStock;
-            for (var i=0; i< res.length; i++){
+            for (var i = 0; i < res.length; i++) {
                 if (res[i].stock_quantity > parseInt(answer.quantity)) {
                     newStock = res[i];
                 }
-                 
-            var newQuantity = chosenItem.stock_quantity - answer.quantity;
-            connection.query(
-                "UPDATE products SET ? WHERE ?",
-                [
-                    {
-                        stock_quantity: newQuantity
-                    },
-                    {
-                        item_id: answer.productId
+
+                var newQuantity = chosenItem.stock_quantity - answer.quantity;
+                connection.query(
+                    "UPDATE products SET ? WHERE ?",
+                    [
+                        {
+                            stock_quantity: newQuantity
+                        },
+                        {
+                            item_id: answer.productId
+                        }
+                    ],
+
+                    function (err) {
+                        if (err) throw err;
+                        console.log("your total amount due is: $" + (answer.quantity * res[i].price));
+                        showStore();
+
+
+                        // total(answer.quantity,res[i].price);
                     }
-                ],
+                );
+            }
+        
+    
+        if (res[i].stock_quantity < answer.quantity) {
+                if (err) throw err;
+                console.log("INSUFFICIENT ITEMS IN STOCK");
+                askCust();
+            }
+        });
 
-                function (err) {
-                    if (err) throw err;
-                    console.log("your total amount due is: $" + (answer.quantity * res[i].price));
-                    showStore();
-
-
-                    // total(answer.quantity,res[i].price);
-                }
-            );
-        }
-        else {
-            console.log("INSUFFICIENT ITEMS IN STOCK") }
-        // else if (res[i].stock_quantity < answer.quantity) {
-        //     if (err) throw err;
-        //     console.log("INSUFFICIENT ITEMS IN STOCK");
-        //     askCust();
-        // }
     });
-
-});
 }
 
 
