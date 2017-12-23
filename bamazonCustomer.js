@@ -20,6 +20,7 @@ connection.connect(function (err) {
 
 //end//
 
+var chosenItem = {};
 // FUNCTIONS // 
 
 //TABLE//
@@ -56,90 +57,76 @@ function askCust() {
             {
                 name: "productId",
                 type: "input",
-                // choices: function(){
-                //     var productArray = [];
-                //     for (var i=0; i < res.length; i++){
-                //         productArray.push(res[i].item_id)
-                //     }
-
-                // },
                 message: "What's the ID of the product you would like to purchase?",
-                // validate: function (value) {
-                //     if (isNaN(value) === false) {
-                //         return true;
-                //     }
-                //     return false
-                // }
+                validate: function (value) {
+                    if (isNaN(value) === false) {
+                        return true;
+                    }
+                    return false
+                }
             },
 
             {
                 name: "quantity",
                 type: "input",
                 message: "How many items would you like to buy?",
-                // validate: function (value) {
-                //     if (isNaN(value) === false) {
-                //         return true;
-                //     }
-                //     return false;
-                // }
+                validate: function (value) {
+                    if (isNaN(value) === false) {
+                        return true;
+                    }
+                    return false;
+                }
             }
         ]).then(function (answer) {
             if (err) throw err;
-            var chosenItem;
-            for (var i = 0; i < res.length; i++) {
-                if (res[i].item_id === answer.productId) {
-                    chosenItem = res[i];
-                    console.log(chosenItem);
-                }
-            }
 
-            var newStock;
-            for (var i = 0; i < res.length; i++) {
-                if (res[i].stock_quantity > parseInt(answer.quantity)) {
-                    newStock = res[i];
-                }
-
-                var newQuantity = chosenItem.stock_quantity - answer.quantity;
-                connection.query(
-                    "UPDATE products SET ? WHERE ?",
-                    [
-                        {
-                            stock_quantity: newQuantity
-                        },
-                        {
-                            item_id: answer.productId
-                        }
-                    ],
-
-                    function (err) {
-                        if (err) throw err;
-                        console.log("your total amount due is: $" + (answer.quantity * res[i].price));
-                        showStore();
-
-
-                        // total(answer.quantity,res[i].price);
-                    }
-                );
-            }
-        
-    
-        if (res[i].stock_quantity < answer.quantity) {
+            connection.query("SELECT * FROM products WHERE item_id = ?", [answer.productId], function (err, res) {
                 if (err) throw err;
-                console.log("INSUFFICIENT ITEMS IN STOCK");
-                askCust();
+
+                // console.log(res);   
+
+                if (res[0].stock_quantity < answer.quantity) {
+                    console.log("INSUFFICIENT ITEMS IN STOCK, TRY ANOTHER ITEM.")
+                    askCust();
+                }
+                else if (res[0].stock_quantity >= answer.quantity) {
+                    var total = answer.quantity * res[0].price;
+                    var newStock = res[0].stock_quantity - answer.quantity;
+                    // console.log(res);   
+                    console.log("You chose product ID:" + " " + answer.productId + " " + res[0].product_name);
+                    console.log("You're purchasing:" + " " + answer.quantity + " " + "item(s)");
+                    console.log("Cost of the product is:" + "$" + res[0].price);
+                    console.log("Your Total is:" + "$" + total);
+
+                    connection.query("UPDATE products SET ? WHERE ?",
+                        [
+                            {
+                                stock_quantity: newStock
+                            },
+
+                            {
+                                item_id: answer.productId
+                            }
+
+                        ])
+                        console.log("Items in stock after purchase:" + newStock);
+                        console.log("WANT TO ORDER ANOTHER ITEM?");
+                        askCust();
+                }
+               
+
             }
+            );
+
+
+
         });
 
-    });
+
+    })
+
 }
 
-
-
-
-// function total(number, price) {
-//     var total = number * price;
-//     console.log("YOUR TOTAL AMOUNT DUE IS:" + "$" + total);
-// };
 
 
 //
@@ -153,5 +140,4 @@ function askCust() {
 // // This means updating the SQL database to reflect the remaining quantity.
 // // Once the update goes through, show the customer the total cost of their 
 // purchase.//
-
 
